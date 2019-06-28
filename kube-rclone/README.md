@@ -7,10 +7,10 @@ The following tables lists the configurable parameters of the kube-rclone chart 
 | Parameter                  | Description                         | Default                                                 |
 |----------------------------|-------------------------------------|---------------------------------------------------------|
 | `images.initContainer.repository`         | Image init container repository | `busybox` |
-| `image.initContainer.tag`         | Image init container tag | `latest` |
-| `image.container.repository`         | Image repository | `quay.io/chaosaffe/rclone` |
-| `image.container.tag`                | Image tag. Possible values listed [here](https://quay.io/repository/chaosaffe/rclone?tab=tags).| `v1.47.0`|
-| `image.pullPolicy`         | Image pull policy | `IfNotPresent` |
+| `images.initContainer.tag`         | Image init container tag | `latest` |
+| `images.container.repository`         | Image repository | `quay.io/chaosaffe/rclone` |
+| `images.container.tag`                | Image tag. Possible values listed [here](https://quay.io/repository/chaosaffe/rclone?tab=tags).| `v1.47.0`|
+| `images.pullPolicy`         | Image pull policy | `IfNotPresent` |
 | `rclone.remote`         | rclone remote to use | `gcache:` |
 | `rclone.path`         | rclone remote path to mount | `/mnt/disks/gdrive` |
 | `rclone.readOnly`         | rclone read only file system | `enabled` |
