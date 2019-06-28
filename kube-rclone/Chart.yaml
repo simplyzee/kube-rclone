@@ -1,0 +1,14 @@
+apiVersion: v1
+appVersion: v1.47.0
+description: A Helm chart for rclone
+name: kube-rclone
+version: 0.1.0
+keywords:
+    - rclone
+home: https://rclone.org/
+icon: https://rclone.org/img/rclone-16x16.png
+sources:
+    - https://github.com/zee-ahmed/kube-rclone
+    - https://quay.io/repository/chaosaffe/rclone
+maintainers:
+    - name: zee-ahmed

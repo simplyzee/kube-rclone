@@ -1,0 +1,48 @@
+# Default values for kube-rclone.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+images:
+  initContainer:
+    repository: busybox
+    tag: latest
+  container:
+    repository: quay.io/chaosaffe/rclone
+    tag: v1.47.0
+  pullPolicy: IfNotPresent
+
+# imagePullSecrets:
+
+rclone:
+  #  remote to mount from rclone config
+  remote: "gcache:"
+  # mount path for  remote
+  path: /mnt/disks/gdrive
+  # read only file system for remote (to protect from deletion of files)
+  readOnly: enabled
+  # additional arguments for customising rclone
+  additionalArgs:
+    - --config=/etc/rclone/rclone.conf
+    - --allow-non-empty
+    - --allow-other
+    - --buffer-size=1G
+    - --dir-cache-time=72h
+    - --drive-chunk-size=256M
+    - --fast-list
+    - --log-level=INFO
+    - --vfs-read-chunk-size=128M
+    - --vfs-read-chunk-size-limit=off
+    - --drive-acknowledge-abuse=true
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # requests:
+  #   cpu: 250m
+  #   memory: 1Gi
+  # limits:
+  #   cpu: 350m
+  #   memory: 2Gi
+
+nodeSelector: {}

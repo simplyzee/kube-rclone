@@ -1,0 +1,2 @@
+Mount path for remote is available at {{ .Values.rclone.path }}
+You can use this as a volume within your other pods to view the file system for your remote.

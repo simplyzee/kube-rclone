@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "kube-rclone.fullname" . }}
+  labels:
+{{ include "kube-rclone.labels" . | indent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "kube-rclone.name" . }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "kube-rclone.name" . }}
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "kube-rclone.name" . }}
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      initContainers:
+      - name: {{ .Chart.Name }}-config
+        image: "{{ .Values.images.initContainer.repository }}:{{ .Values.images.initContainer.tag }}"
+        command:
+          - cp
+        args:
+          - -v
+          - /in/rclone.conf
+          - /out/rclone.conf
+        volumeMounts:
+        - name: config-data
+          mountPath: /in
+        - name: config
+          mountPath: /out
+      terminationGracePeriodSeconds: 120
+      containers:
+      - name: {{ .Chart.Name }}-rclone
+        image: "{{ .Values.images.container.repository }}:{{ .Values.images.container.tag }}"
+        args:
+          - mount
+          - "{{ .Values.rclone.remote }}"
+          - {{ .Values.rclone.path }}
+        {{- if eq .Values.rclone.readOnly "enabled" }}
+          - --read-only
+        {{ end }}
+        {{- range .Values.rclone.additionalArgs }}
+          - {{ . }}
+        {{- end }}
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh","-c","fusermount -uz {{ .Values.rclone.path }}"]
+        securityContext:
+          privileged: true
+          capabilities:
+            add:
+              - SYS_ADMIN
+        resources:
+{{- toYaml .Values.resources | nindent 10 }}
+        volumeMounts:
+        - name: config
+          mountPath: /etc/rclone
+        - name: data
+          mountPath: /var/lib/rclone
+        - name: media
+          mountPath: {{ .Values.rclone.path }}
+          mountPropagation: Bidirectional
+      volumes:
+      - name: config
+        emptyDir: {}
+      - name: config-data
+        configMap:
+          name: {{ include "kube-rclone.fullname" . }}-configmap
+      - name: media
+        hostPath:
+          path: {{ .Values.rclone.path }}
+      - name: data
+        hostPath:
+          path: /var/lib/rclone/
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
