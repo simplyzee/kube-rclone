@@ -20,18 +20,16 @@ rclone:
   # read only file system for remote (to protect from deletion of files)
   readOnly: enabled
   # additional arguments for customising rclone
+  # mount options can be found here - https://rclone.org/commands/rclone_mount/#options
   additionalArgs:
-    - --config=/etc/rclone/rclone.conf
-    - --allow-non-empty
-    - --allow-other
-    - --buffer-size=1G
-    - --dir-cache-time=72h
-    - --drive-chunk-size=256M
-    - --fast-list
-    - --log-level=INFO
-    - --vfs-read-chunk-size=128M
-    - --vfs-read-chunk-size-limit=off
-    - --drive-acknowledge-abuse=true
+    # - --buffer-size=1G
+    # - --dir-cache-time=72h
+    # - --drive-chunk-size=256M
+    # - --fast-list
+    # - --log-level=INFO
+    # - --vfs-read-chunk-size=128M
+    # - --vfs-read-chunk-size-limit=off
+    # - --drive-acknowledge-abuse=true
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious

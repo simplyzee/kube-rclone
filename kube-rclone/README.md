@@ -11,7 +11,7 @@ The following tables lists the configurable parameters of the kube-rclone chart 
 | `images.container.repository`         | Image repository | `quay.io/chaosaffe/rclone` |
 | `images.container.tag`                | Image tag. Possible values listed [here](https://quay.io/repository/chaosaffe/rclone?tab=tags).| `v1.47.0`|
 | `images.pullPolicy`         | Image pull policy | `IfNotPresent` |
-| `rclone.remote`         | rclone remote to use | `gcache:` |
+| `rclone.remote`         | rclone remote to use based in rclone config | `gcache:` |
 | `rclone.path`         | rclone remote path to mount | `/mnt/disks/gdrive` |
 | `rclone.readOnly`         | rclone read only file system | `enabled` |
 | `rclone.additionalArgs`         | rclone additional arguments to pass for mount options | `` |
