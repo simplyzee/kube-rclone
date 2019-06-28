@@ -18,7 +18,7 @@ rclone:
   # mount path for  remote
   path: /mnt/disks/gdrive
   # read only file system for remote (to protect from deletion of files)
-  readOnly: enabled
+  readOnly: true
   # additional arguments for customising rclone
   # mount options can be found here - https://rclone.org/commands/rclone_mount/#options
   additionalArgs:

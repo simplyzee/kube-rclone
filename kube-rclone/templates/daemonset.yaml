@@ -45,7 +45,7 @@ spec:
           - --config=/etc/rclone/rclone.conf
           - --allow-non-empty
           - --allow-other
-        {{- if eq .Values.rclone.readOnly "enabled" }}
+        {{- if eq .Values.rclone.readOnly "true" }}
           - --read-only
         {{ end }}
         {{- range .Values.rclone.additionalArgs }}
