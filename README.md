@@ -45,4 +45,4 @@ It has only been tested with [kube-plex](https://github.com/munnerz/kube-plex) s
 
 ## Credits
 
-Full credit list at: [https://github.com/zee-ahmed/kube-rclone/CREDITS.md](https://github.com/zee-ahmed/kube-rclone/CREDITS.md)
+Full credit list at: [https://github.com/zee-ahmed/kube-rclone/CREDITS.md](https://github.com/zee-ahmed/kube-rclone/blob/master/CREDITS.md)
