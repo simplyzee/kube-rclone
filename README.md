@@ -43,6 +43,10 @@ Example of pod logs:
 
 It has only been tested with [kube-plex](https://github.com/munnerz/kube-plex) so far. There's still more work to be done to make it stable for other services e.g [Radarr](https://github.com/Radarr/Radarr) and [Sonarr](https://github.com/Sonarr/Sonarr/).
 
+## Contributing
+
+Please raise an issue or pull request if you have any issues, questions or features.
+
 ## Credits
 
 Full credit list at: [https://github.com/zee-ahmed/kube-rclone/CREDITS.md](https://github.com/zee-ahmed/kube-rclone/CREDITS.md)
