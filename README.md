@@ -49,4 +49,4 @@ Please raise an issue or pull request if you have any issues, questions or featu
 
 ## Credits
 
-Full credit list at: [https://github.com/zee-ahmed/kube-rclone/CREDITS.md](https://github.com/zee-ahmed/kube-rclone/CREDITS.md)
+Full credit list at: [https://github.com/zee-ahmed/kube-rclone/CREDITS.md](https://github.com/zee-ahmed/kube-rclone/blob/master/CREDITS.md)
