@@ -77,8 +77,15 @@ spec:
         configMap:
           name: {{ include "kube-rclone.fullname" . }}-configmap
       - name: media
-        hostPath:
-          path: {{ .Values.rclone.path }}
+        flexVolume:
+          driver: ceph.rook.io/rook
+          fsType: ceph
+          options:
+            fsName: myfs
+            clusterNamespace: rook-ceph
+      # # - name: media
+      #   hostPath:
+      #     path: {{ .Values.rclone.path }}
       - name: data
         hostPath:
           path: /var/lib/rclone/
