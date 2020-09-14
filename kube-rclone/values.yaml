@@ -7,7 +7,7 @@ images:
     tag: latest
   container:
     repository: quay.io/simplyzee/kube-rclone
-    tag: v1.52.3
+    tag: v1.53.1
   pullPolicy: IfNotPresent
 
 # imagePullSecrets:
