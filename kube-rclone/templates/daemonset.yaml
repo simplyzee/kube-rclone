@@ -12,9 +12,6 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: {{ include "kube-rclone.name" . }}
-    metadata:
-      labels:
-        app.kubernetes.io/name: {{ include "kube-rclone.name" . }}
     spec:
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
