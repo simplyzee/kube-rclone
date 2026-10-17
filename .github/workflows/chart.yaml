@@ -39,6 +39,9 @@ jobs:
             echo "::endgroup::"
           done
 
+      - name: Artifact Hub image list matches the chart
+        run: python3 .github/scripts/check-artifacthub-images.py kube-rclone kube-rclone/ci/inline-config-values.yaml kube-rclone/ci/existing-secret-values.yaml
+
       - name: Install without a config fails with a clear message
         run: |
           if helm template test kube-rclone > /dev/null 2> err.txt; then
