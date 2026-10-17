@@ -2,7 +2,7 @@ apiVersion: v2
 name: kube-rclone
 description: Mount any rclone remote (Google Drive, S3, Dropbox and more) on every Kubernetes node with a DaemonSet
 type: application
-version: 0.2.0
+version: 0.2.1
 appVersion: "1.75.2"
 kubeVersion: ">=1.21.0-0"
 keywords:
@@ -22,3 +22,19 @@ maintainers:
   - name: simplyzee
     email: zee@simplyzee.dev
     url: https://simplyzee.dev
+annotations:
+  artifacthub.io/category: storage
+  artifacthub.io/license: Apache-2.0
+  # Keep in sync with values.yaml; CI checks this matches the rendered chart.
+  artifacthub.io/images: |
+    - name: rclone
+      image: rclone/rclone:1.75.2
+      platforms:
+        - linux/amd64
+        - linux/arm64
+  artifacthub.io/links: |
+    - name: support
+      url: https://github.com/simplyzee/kube-rclone/issues
+  artifacthub.io/changes: |
+    - kind: added
+      description: Artifact Hub metadata so security scans check the image the chart actually uses
