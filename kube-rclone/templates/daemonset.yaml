@@ -1,85 +1,142 @@
+{{- include "kube-rclone.validate" . -}}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: {{ include "kube-rclone.fullname" . }}
   labels:
-{{ include "kube-rclone.labels" . | indent 4 }}
+    {{- include "kube-rclone.labels" . | nindent 4 }}
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "kube-rclone.name" . }}
+      {{- include "kube-rclone.selectorLabels" . | nindent 6 }}
+  {{- with .Values.updateStrategy }}
+  updateStrategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: {{ include "kube-rclone.name" . }}
+        {{- include "kube-rclone.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- if or (not .Values.rclone.existingSecret) .Values.podAnnotations }}
+      annotations:
+        {{- if not .Values.rclone.existingSecret }}
+        # Roll the pods when the rclone config changes.
+        checksum/config: {{ include "kube-rclone.configContent" . | sha256sum }}
+        {{- end }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
     spec:
-    {{- with .Values.imagePullSecrets }}
+      {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
-    {{- end }}
+      {{- end }}
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       initContainers:
-      - name: {{ .Chart.Name }}-config
-        image: "{{ .Values.images.initContainer.repository }}:{{ .Values.images.initContainer.tag }}"
-        command:
-          - cp
-        args:
-          - -v
-          - /in/rclone.conf
-          - /out/rclone.conf
-        volumeMounts:
-        - name: config-data
-          mountPath: /in
+        # rclone refreshes OAuth tokens and writes them back, so it needs a
+        # writable copy of the config rather than the read-only Secret.
         - name: config
-          mountPath: /out
-      terminationGracePeriodSeconds: 120
+          image: {{ include "kube-rclone.image" . | quote }}
+          imagePullPolicy: {{ include "kube-rclone.pullPolicy" . }}
+          command: ["sh", "-c", "cp /secret/rclone.conf /config/rclone/rclone.conf && chmod 600 /config/rclone/rclone.conf"]
+          volumeMounts:
+            - name: config-secret
+              mountPath: /secret
+              readOnly: true
+            - name: config
+              mountPath: /config/rclone
       containers:
-      - name: {{ .Chart.Name }}-rclone
-        image: "{{ .Values.images.container.repository }}:{{ .Values.images.container.tag }}"
-        args:
-          - mount
-          - "{{ .Values.rclone.remote }}"
-          - {{ .Values.rclone.path }}
-          - --config=/etc/rclone/rclone.conf
-          - --allow-non-empty
-          - --allow-other
-        {{- if .Values.rclone.readOnly }}
-          - --read-only
-        {{ end }}
-        {{- range .Values.rclone.additionalArgs }}
-          - {{ . }}
-        {{- end }}
-        lifecycle:
-          preStop:
+        - name: rclone
+          image: {{ include "kube-rclone.image" . | quote }}
+          imagePullPolicy: {{ include "kube-rclone.pullPolicy" . }}
+          args:
+            - mount
+            - {{ .Values.rclone.remote | quote }}
+            - {{ .Values.rclone.path | quote }}
+            - --config=/config/rclone/rclone.conf
+            - --cache-dir={{ .Values.rclone.cacheDir }}
+            {{- if .Values.rclone.allowOther }}
+            - --allow-other
+            {{- end }}
+            {{- if .Values.rclone.allowNonEmpty }}
+            - --allow-non-empty
+            {{- end }}
+            {{- if .Values.rclone.readOnly }}
+            - --read-only
+            {{- end }}
+            {{- range .Values.rclone.additionalArgs }}
+            - {{ . | quote }}
+            {{- end }}
+          {{- with .Values.rclone.env }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - sh
+                  - -c
+                  {{- $p := .Values.rclone.path }}
+                  - {{ printf "fusermount3 -uz '%s' || fusermount -uz '%s' || umount -l '%s'" $p $p $p | quote }}
+          {{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
             exec:
-              command: ["/bin/sh","-c","fusermount -uz {{ .Values.rclone.path }}"]
-        securityContext:
-          privileged: true
-          capabilities:
-            add:
-              - SYS_ADMIN
-        resources:
-{{- toYaml .Values.resources | nindent 10 }}
-        volumeMounts:
-        - name: config
-          mountPath: /etc/rclone
-        - name: data
-          mountPath: /var/lib/rclone
-        - name: media
-          mountPath: {{ .Values.rclone.path }}
-          mountPropagation: Bidirectional
+              # Fails when the FUSE mount has died, so the pod restarts and remounts.
+              command: ["mountpoint", "-q", {{ .Values.rclone.path | quote }}]
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+          {{- end }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /config/rclone
+            - name: cache
+              mountPath: {{ .Values.rclone.cacheDir }}
+            - name: mount
+              mountPath: {{ .Values.rclone.path }}
+              mountPropagation: Bidirectional
       volumes:
-      - name: config
-        emptyDir: {}
-      - name: config-data
-        configMap:
-          name: {{ include "kube-rclone.fullname" . }}-configmap
-      - name: media
-        hostPath:
-          path: {{ .Values.rclone.path }}
-      - name: data
-        hostPath:
-          path: /var/lib/rclone/
+        - name: config
+          emptyDir: {}
+        - name: config-secret
+          secret:
+            secretName: {{ include "kube-rclone.secretName" . }}
+            defaultMode: 0400
+            items:
+              - key: {{ include "kube-rclone.secretKey" . }}
+                path: rclone.conf
+        - name: mount
+          hostPath:
+            path: {{ .Values.rclone.path }}
+            type: DirectoryOrCreate
+        - name: cache
+          hostPath:
+            path: {{ .Values.rclone.cacheDir }}
+            type: DirectoryOrCreate
       {{- with .Values.nodeSelector }}
       nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}

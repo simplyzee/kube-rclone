@@ -1,17 +1,13 @@
-FROM alpine:3.12
+# The chart uses the official rclone image (rclone/rclone) by default, which
+# already includes fuse3, ca-certificates and a shell. Build this only if you
+# need to add your own tools on top, then set image.repository/image.tag.
+#
+#   docker build -t my-registry/kube-rclone:1.75.2 .
+#
+ARG RCLONE_VERSION=1.75.2
+FROM rclone/rclone:${RCLONE_VERSION}
 
-ARG RCLONE_VERSION=1.53.1
+# Example: add extra packages here.
+# RUN apk add --no-cache bash
 
-RUN apk add --no-cache --virtual=build-dependencies wget unzip && \
-    cd tmp && \
-    wget -q --no-check-certificate https://downloads.rclone.org/v${RCLONE_VERSION}/rclone-v${RCLONE_VERSION}-linux-amd64.zip && \
-    unzip /tmp/rclone-v${RCLONE_VERSION}-linux-amd64.zip && \
-    mv /tmp/rclone-v${RCLONE_VERSION}-linux-amd64/rclone /usr/bin
-
-RUN apk -U add curl fuse ca-certificates && \
-    rm -rf /var/cache/apk/*
-
-RUN apk del --purge build-dependencies && \
-    rm -rf /tmp/* /var/tmp/* /var/cache/apk/*
-
-ENTRYPOINT ["/usr/bin/rclone"]
+ENTRYPOINT ["rclone"]

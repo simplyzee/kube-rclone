@@ -1,2 +1,25 @@
-Mount path for remote is available at {{ .Values.rclone.path }}
-You can use this as a volume within your other pods to view the file system for your remote.
+rclone is mounting {{ .Values.rclone.remote }} on every node at {{ .Values.rclone.path }}{{ if .Values.rclone.readOnly }} (read-only){{ end }}.
+
+Check the pods are running and the mount is up:
+
+  kubectl get pods --namespace {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+  kubectl logs --namespace {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }} -c rclone
+
+To use the files in another workload, mount the same host path with
+HostToContainer propagation so the pod sees the FUSE mount:
+
+  volumes:
+    - name: rclone
+      hostPath:
+        path: {{ .Values.rclone.path }}
+  containers:
+    - volumeMounts:
+        - name: rclone
+          mountPath: /data
+          mountPropagation: HostToContainer
+{{- if and (not .Values.rclone.existingSecret) (not .Values.rclone.config) }}
+
+Note: your rclone config came from files/rclone.conf inside the chart. That
+still works, but passing it with --set-file rclone.config=./rclone.conf or
+using rclone.existingSecret keeps credentials out of the chart directory.
+{{- end }}
