@@ -2,7 +2,7 @@ apiVersion: v2
 name: kube-rclone
 description: Mount any rclone remote (Google Drive, S3, Dropbox and more) on every Kubernetes node with a DaemonSet
 type: application
-version: 0.2.1
+version: 0.2.2
 appVersion: "1.75.2"
 kubeVersion: ">=1.21.0-0"
 keywords:
@@ -14,7 +14,7 @@ keywords:
   - google-drive
   - s3
 home: https://github.com/simplyzee/kube-rclone
-icon: https://rclone.org/img/rclone-16x16.png
+icon: https://raw.githubusercontent.com/rclone/rclone/master/graphics/logo/logo_symbol/logo_symbol_color_256px.png
 sources:
   - https://github.com/simplyzee/kube-rclone
   - https://github.com/rclone/rclone
@@ -36,5 +36,5 @@ annotations:
     - name: support
       url: https://github.com/simplyzee/kube-rclone/issues
   artifacthub.io/changes: |
-    - kind: added
-      description: Artifact Hub metadata so security scans check the image the chart actually uses
+    - kind: fixed
+      description: Chart icon, which pointed at a logo rclone.org no longer serves
