@@ -1,0 +1,21 @@
+# CI: config passed inline, extra args, env, tolerations and priority class.
+rclone:
+  remote: "gdrive:media"
+  path: /mnt/disks/media
+  config: |
+    [gdrive]
+    type = drive
+    scope = drive.readonly
+  additionalArgs:
+    - --vfs-cache-mode=full
+    - --dir-cache-time=72h
+  env:
+    - name: RCLONE_LOG_LEVEL
+      value: INFO
+priorityClassName: system-node-critical
+tolerations:
+  - operator: Exists
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi

@@ -1,0 +1,11 @@
+# CI: a 0.1.x-style values file still renders.
+images:
+  container:
+    repository: quay.io/simplyzee/kube-rclone
+    tag: v1.53.1
+  pullPolicy: Always
+rclone:
+  config: |
+    [gcache]
+    type = cache
+    remote = gdrive:

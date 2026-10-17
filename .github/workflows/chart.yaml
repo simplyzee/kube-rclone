@@ -1,0 +1,63 @@
+name: chart
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+
+      - name: Install kubeconform
+        run: |
+          curl -sSL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz \
+            | tar -xz -C /usr/local/bin kubeconform
+
+      - name: helm lint (every CI values file)
+        run: |
+          for f in kube-rclone/ci/*.yaml; do
+            echo "::group::helm lint -f $f"
+            helm lint kube-rclone --strict -f "$f"
+            echo "::endgroup::"
+          done
+
+      - name: Render and validate against Kubernetes schemas
+        run: |
+          for f in kube-rclone/ci/*.yaml; do
+            echo "::group::$f"
+            helm template test kube-rclone -f "$f" > rendered.yaml
+            cat rendered.yaml
+            kubeconform -strict -summary -kubernetes-version 1.30.0 rendered.yaml
+            echo "::endgroup::"
+          done
+
+      - name: Install without a config fails with a clear message
+        run: |
+          if helm template test kube-rclone > /dev/null 2> err.txt; then
+            echo "expected rendering to fail without an rclone config"; exit 1
+          fi
+          cat err.txt
+          grep -q "no rclone config found" err.txt
+
+      - name: Two releases never share a selector
+        run: |
+          a=$(helm template one kube-rclone -f kube-rclone/ci/inline-config-values.yaml | grep -A3 'matchLabels' | grep instance)
+          b=$(helm template two kube-rclone -f kube-rclone/ci/inline-config-values.yaml | grep -A3 'matchLabels' | grep instance)
+          echo "$a"; echo "$b"
+          [ "$a" != "$b" ]
+
+      - name: Package
+        run: helm package kube-rclone --destination dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kube-rclone-chart
+          path: dist/*.tgz

@@ -1,46 +1,94 @@
 # Default values for kube-rclone.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-images:
-  initContainer:
-    repository: busybox
-    tag: latest
-  container:
-    repository: quay.io/simplyzee/kube-rclone
-    tag: v1.53.1
+
+image:
+  # The official multi-arch rclone image (amd64, arm64, arm/v7 and more).
+  repository: rclone/rclone
+  # Defaults to the chart's appVersion when empty.
+  tag: ""
   pullPolicy: IfNotPresent
 
-# imagePullSecrets:
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
 
 rclone:
-  #  remote to mount from rclone config
+  # Remote to mount, as named in your rclone config. Can include a path, e.g. "gdrive:media".
   remote: "gcache:"
-  # mount path for  remote
+  # Where the remote is mounted on each node (a hostPath).
   path: /mnt/disks/gdrive
-  # read only file system for remote (to protect from deletion of files)
+  # Mount read-only so nothing in the cluster can delete files on the remote.
   readOnly: true
-  # additional arguments for customising rclone
-  # mount options can be found here - https://rclone.org/commands/rclone_mount/#options
-  additionalArgs:
-    # - --buffer-size=1G
+  # Let other pods and users on the node read the mount.
+  allowOther: true
+  # Allow mounting over a directory that already has files in it.
+  allowNonEmpty: true
+  # Node directory for rclone's VFS cache, so the cache survives pod restarts.
+  cacheDir: /var/lib/rclone
+
+  # Your rclone config. Pick ONE of these. It is always stored in a Secret,
+  # because rclone configs contain OAuth tokens and keys.
+  #
+  # 1. Use a Secret you manage yourself (recommended for GitOps).
+  existingSecret: ""
+  existingSecretKey: rclone.conf
+  #
+  # 2. Pass the config at install time:
+  #    helm install rclone simplyzee/kube-rclone --set-file rclone.config=./rclone.conf
+  config: ""
+  #
+  # 3. Legacy: paste it into files/rclone.conf inside the chart (0.1.x behaviour).
+
+  # Extra flags for rclone mount. Options: https://rclone.org/commands/rclone_mount/#options
+  additionalArgs: []
+    # - --vfs-cache-mode=full
+    # - --vfs-cache-max-size=20G
+    # - --buffer-size=64M
     # - --dir-cache-time=72h
-    # - --drive-chunk-size=256M
-    # - --fast-list
-    # - --log-level=INFO
     # - --vfs-read-chunk-size=128M
     # - --vfs-read-chunk-size-limit=off
-    # - --drive-acknowledge-abuse=true
+    # - --log-level=INFO
+
+  # Extra environment variables for rclone, e.g. RCLONE_* settings.
+  env: []
+    # - name: RCLONE_LOG_LEVEL
+    #   value: INFO
+
+# Restarts the pod if the mount dies (e.g. "transport endpoint is not connected").
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 30
+  timeoutSeconds: 10
+  failureThreshold: 3
+
+# FUSE mounts with bidirectional propagation need a privileged container.
+securityContext:
+  privileged: true
+  capabilities:
+    add:
+      - SYS_ADMIN
+
+# Time to unmount cleanly before the pod is killed.
+terminationGracePeriodSeconds: 120
+
+updateStrategy:
+  type: RollingUpdate
+
+# Mounts that other workloads depend on are a good fit for system-node-critical.
+priorityClassName: ""
+
+podAnnotations: {}
+podLabels: {}
 
 resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
   # requests:
-  #   cpu: 250m
-  #   memory: 1Gi
+  #   cpu: 100m
+  #   memory: 256Mi
   # limits:
-  #   cpu: 350m
   #   memory: 2Gi
 
-nodeSelector: {}
+# FUSE mounts only work on Linux nodes, so Windows nodes are skipped.
+nodeSelector:
+  kubernetes.io/os: linux
+tolerations: []
+affinity: {}
